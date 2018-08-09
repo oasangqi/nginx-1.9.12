@@ -1,0 +1,51 @@
+b main
+
+b ngx_init_cycle
+
+b ngx_events_block
+b ngx_event_core_create_conf
+b ngx_epoll_create_conf
+b ngx_event_connections
+b ngx_event_core_init_conf
+b ngx_epoll_init_conf
+
+b ngx_event_init_conf
+
+b ngx_event_module_init
+
+b ngx_event_process_init
+
+b ngx_epoll_init
+b ngx_epoll_add_event
+b ngx_process_events_and_timers
+b ngx_epoll_process_events
+b ngx_event_accept
+b ngx_http_init_connection
+
+#b ngx_http_wait_request_handler
+#b ngx_unix_recv
+#b ngx_http_create_request
+#b ngx_http_block_reading
+#b ngx_http_process_request_line
+#b ngx_http_read_request_header
+#b ngx_http_parse_request_line
+#b ngx_http_process_request_headers
+#b ngx_http_process_user_agent
+
+b ngx_epoll_del_connection
+
+b ngx_epoll_del_event
+
+b ngx_epoll_add_connection
+b ngx_epoll_notify
+b ngx_epoll_done
+b ngx_epoll_notify_handler
+
+#b ngx_readv_chain
+#b ngx_udp_unix_recv
+b ngx_unix_send
+#b ngx_writev_chain
+#b ngx_http_empty_handler
+
+r -c /root/repo1/nginx-1.9.12/conf/nginx.conf
+set follow-fork-mode child
