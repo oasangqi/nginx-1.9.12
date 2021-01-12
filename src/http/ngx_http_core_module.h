@@ -204,7 +204,7 @@ typedef struct {
 
     ngx_bufs_t                  large_client_header_buffers;
 
-    ngx_msec_t                  client_header_timeout;
+    ngx_msec_t                  client_header_timeout; /* 读请求头期间读超时时间 */
 
     ngx_flag_t                  ignore_invalid_headers;
     ngx_flag_t                  merge_slashes;

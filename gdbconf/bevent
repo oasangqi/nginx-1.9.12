@@ -30,6 +30,12 @@ b ngx_http_init_connection
 #b ngx_http_read_request_header
 #b ngx_http_parse_request_line
 #b ngx_http_process_request_headers
+#b ngx_http_parse_header_line
+#b ngx_http_process_request
+#phases
+#b ngx_http_core_content_phase
+
+# header对应的处理函数
 #b ngx_http_process_user_agent
 
 b ngx_epoll_del_connection

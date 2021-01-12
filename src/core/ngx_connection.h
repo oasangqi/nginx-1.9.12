@@ -48,7 +48,7 @@ struct ngx_listening_s {
     /* should be here because of the AcceptEx() preread */
     size_t              post_accept_buffer_size;
     /* should be here because of the deferred accept */
-    ngx_msec_t          post_accept_timeout; /* 超过该时间没有收到数据，则内核丢弃连接??? */
+    ngx_msec_t          post_accept_timeout; /* 超过该时间没有收到数据，则内核丢弃连接 */
 
 	/* 前一个ngx_listening_t结构，多个ngx_listening_t结构体之间由previous指针组成单链表 */
     ngx_listening_t    *previous;

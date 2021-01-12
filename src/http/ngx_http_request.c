@@ -409,6 +409,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     b = c->buffer;
 
+	/* 初始化一个最大请求头大小的BUF */ 
     if (b == NULL) {
         b = ngx_create_temp_buf(c->pool, size);
         if (b == NULL) {
@@ -431,11 +432,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
+	/* 读一次数据 */
     n = c->recv(c, b->last, size);
 
+	/* 没有收到数据 */
     if (n == NGX_AGAIN) {
 
         if (!rev->timer_set) {
+			/* 设置超时时间，建立连接到首次收到数据的时间 */
             ngx_add_timer(rev, c->listening->post_accept_timeout);
             ngx_reusable_connection(c, 1);
         }
@@ -468,6 +472,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         return;
     }
 
+	/* 读到了n字节数据 */
     b->last += n;
 
     if (hc->proxy_protocol) {
@@ -495,12 +500,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_reusable_connection(c, 0);
 
+	/* 为该连接创建request */
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
 
+	/* 修改连接对应读事件的回调，表示待处理请求行，因为此时有n字节数据未处理，所以先执行一次回调 */
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
 }
@@ -950,23 +957,24 @@ ngx_http_process_request_line(ngx_event_t *rev)
             }
         }
 
+		/* 仅解析请求行 */
         rc = ngx_http_parse_request_line(r, r->header_in);
 
         if (rc == NGX_OK) {
 
             /* the request line has been parsed successfully */
 
-            r->request_line.len = r->request_end - r->request_start;
-            r->request_line.data = r->request_start;
-            r->request_length = r->header_in->pos - r->request_start;
+            r->request_line.len = r->request_end - r->request_start; /* 例:14 */
+            r->request_line.data = r->request_start; /* 例:GET / HTTP/1.1 */
+            r->request_length = r->header_in->pos - r->request_start; /* 例:14 + 2 (\r\n)*/
 
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                            "http request line: \"%V\"", &r->request_line);
 
-            r->method_name.len = r->method_end - r->request_start + 1;
-            r->method_name.data = r->request_line.data;
+            r->method_name.len = r->method_end - r->request_start + 1; /* 例:GET */
+            r->method_name.data = r->request_line.data; /* 例:3 */
 
-            if (r->http_protocol.data) {
+            if (r->http_protocol.data) { /* {HTTP/1.1, 8} */
                 r->http_protocol.len = r->request_end - r->http_protocol.data;
             }
 
@@ -1024,6 +1032,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
 
             c->log->action = "reading client request headers";
 
+			/* 修改读事件回调，表示接下来处理请求头部，且BUF中可能有请求头，需要处理一次 */
             rev->handler = ngx_http_process_request_headers;
             ngx_http_process_request_headers(rev);
 
@@ -1265,6 +1274,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
         /* the host header could change the server configuration context */
         cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
+		/* 处理一行请求头 */
         rc = ngx_http_parse_header_line(r, r->header_in,
                                         cscf->underscores_in_headers);
 
@@ -1314,9 +1324,11 @@ ngx_http_process_request_headers(ngx_event_t *rev)
                 ngx_strlow(h->lowcase_key, h->key.data, h->key.len);
             }
 
+			/* 哈希表找该行请求头的key */
             hh = ngx_hash_find(&cmcf->headers_in_hash, h->hash,
                                h->lowcase_key, h->key.len);
 
+			/* 请求头回调 */
             if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
                 return;
             }
@@ -1381,10 +1393,12 @@ ngx_http_read_request_header(ngx_http_request_t *r)
 
     n = r->header_in->last - r->header_in->pos;
 
+	/* 有数据则返回，处理请求行、请求头使用状态机，所有字节都能处理掉 */
     if (n > 0) {
         return n;
     }
 
+	/* 没有数据则接收数据 */
     if (rev->ready) {
         n = c->recv(c, r->header_in->last,
                     r->header_in->end - r->header_in->last);
@@ -1419,6 +1433,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+	/* 读到n字节数据后更新标记 */
     r->header_in->last += n;
 
     return n;
@@ -1898,17 +1913,21 @@ ngx_http_process_request(ngx_http_request_t *r)
 
 #endif
 
+	/* 不用再读数据，关闭定时器 */
     if (c->read->timer_set) {
         ngx_del_timer(c->read);
     }
 
 #if (NGX_STAT_STUB)
+	/* 不等待读 */
     (void) ngx_atomic_fetch_add(ngx_stat_reading, -1);
     r->stat_reading = 0;
+	/* 等待写 */
     (void) ngx_atomic_fetch_add(ngx_stat_writing, 1);
     r->stat_writing = 1;
 #endif
 
+	/* 请求处理阶段的读、写事件回调 */
     c->read->handler = ngx_http_request_handler;
     c->write->handler = ngx_http_request_handler;
     r->read_event_handler = ngx_http_block_reading;

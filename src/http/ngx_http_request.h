@@ -21,9 +21,9 @@
 
 
 #define NGX_HTTP_VERSION_9                 9
-#define NGX_HTTP_VERSION_10                1000
-#define NGX_HTTP_VERSION_11                1001
-#define NGX_HTTP_VERSION_20                2000
+#define NGX_HTTP_VERSION_10                1000 /* HTTP/1.0 */
+#define NGX_HTTP_VERSION_11                1001 /* HTTP/1.1 */
+#define NGX_HTTP_VERSION_20                2000 /* HTTP/2.0 */
 
 #define NGX_HTTP_UNKNOWN                   0x0001
 #define NGX_HTTP_GET                       0x0002
@@ -380,7 +380,7 @@ struct ngx_http_request_s {
                                          /* of ngx_http_upstream_state_t */
 
     ngx_pool_t                       *pool;
-    ngx_buf_t                        *header_in;
+    ngx_buf_t                        *header_in; /* 初始化为创建连接时初始化的buffer，内容为读到的头*/
 
     ngx_http_headers_in_t             headers_in;
     ngx_http_headers_out_t            headers_out;
@@ -392,10 +392,10 @@ struct ngx_http_request_s {
     ngx_msec_t                        start_msec;
 
     ngx_uint_t                        method;
-    ngx_uint_t                        http_version;
+    ngx_uint_t                        http_version; /* HTTP/1.1 为1*1000 + 1 = 1001 */
 
-    ngx_str_t                         request_line;
-    ngx_str_t                         uri;
+    ngx_str_t                         request_line; /* 请求行 如:GET / HTTP/1.1 */
+    ngx_str_t                         uri; /* uri */
     ngx_str_t                         args;
     ngx_str_t                         exten;
     ngx_str_t                         unparsed_uri;

@@ -12,9 +12,9 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/* 用于指向字符串常量或BUFF */
 typedef struct {
-    size_t      len; /* strlen(data) */
+    size_t      len; /* data指向的buff大小减1 */
     u_char     *data; 
 } ngx_str_t;
 
@@ -36,7 +36,9 @@ typedef struct {
     u_char     *data;
 } ngx_variable_value_t;
 
-
+/* 用于创建ngx_str_t对象:
+ * 参数为字符串常量时str成员不可修改，len成员为strlen(str),
+ * 参数为字符数组时str成员可修改，len成员为buff可容纳的字符串长度。 */ 
 #define ngx_string(str)     { sizeof(str) - 1, (u_char *) str }
 #define ngx_null_string     { 0, NULL }
 #define ngx_str_set(str, text)                                               \

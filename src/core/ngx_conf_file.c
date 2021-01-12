@@ -1124,6 +1124,8 @@ ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/* cf为全局配置结构，用于取解析到的参数
+ * conf为保存配置解析结果的结构体地址 */
 char *
 ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
